@@ -28,7 +28,7 @@ jobs:
           key: gem-cache-{{ checksum "Gemfile.lock" }}
       - run:
           name: Lint
-          command: bundle exec rubocop
+          command: bundle exec rubocop .
       - run:
           name: Wait DB
           command: dockerize -wait tcp://db:5432 -timeout 1m
