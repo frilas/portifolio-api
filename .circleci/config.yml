@@ -1,0 +1,39 @@
+version: 2.1
+
+orbs:
+  heroku: circleci/heroku@0.0.10. # Invoke the Heroku orb
+
+jobs:
+  test-api:
+    docker:
+      - image: circleci/ruby:2.4-node
+      - image: circleci/postgres
+    working_directory:
+    steps:
+      - checkout
+      - run:
+          name: install dependencies
+          command: bundle install --path vendor/bundle
+      - run:
+          name: db setup
+          command: bundle exec rake db:create db:schema:load
+      - run:
+          name: Run tests
+          command: rspec ./spec
+  deploy-stg:
+    - heroku/ploy-via-git --app-name=$HEROKU_APP_NAME_STAGING
+  deploy-prod:
+    - heroku/ploy-via-git
+
+workflows:
+  - test-api
+  - deploy-stg
+      requires:
+        - test
+      filters:
+        branches:
+          only: master
+  - deploy-prod
+      type: approval
+      requires:
+        - test
