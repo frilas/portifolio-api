@@ -13,16 +13,11 @@ services:
       - bundle:/bundle
     environment:
       BUNDLE_PATH: /bundle/vendor
-      DB_USERNAME: db
-      DB_PASSWORD: db
     depends_on:
       - db
 
   db:
     image: postgres
-    environment:
-      POSTGRES_USER: db
-      POSTGRES_PASSWORD: db
     ports:
       - 5432:5432
     volumes:
