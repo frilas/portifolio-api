@@ -1,39 +1,70 @@
-version: 2.1
-
-orbs:
-  heroku: circleci/heroku@0.0.10. # Invoke the Heroku orb
+version: 2
 
 jobs:
   test-api:
     docker:
-      - image: circleci/ruby:2.4-node
+      - image: circleci/ruby:2.7.0-node
+        environment:
+          RAILS_ENV: test
+
       - image: circleci/postgres
-    working_directory:
+        environment:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: portifolio_api_test
+    working_directory: ~/portifolio-api
     steps:
       - checkout
+      - restore_cache:
+          keys:
+            - gem-cache-{{ checksum "Gemfile.lock" }}
       - run:
           name: install dependencies
-          command: bundle install --path vendor/bundle
+          command: |
+            gem install bundler
+            bundle install --deployment --path vendor/bundle
+      - save_cache:
+          paths:
+            - ./vendor/bundle
+          key: gem-cache-{{ checksum "Gemfile.lock" }}
       - run:
-          name: db setup
+          name: Lint
+          command: bundle exec rubocop
+      - run:
+          name: Wait DB
+          command: dockerize -wait tcp://db:5432 -timeout 1m
+      - run:
+          name: Setup DB
           command: bundle exec rake db:create db:schema:load
       - run:
           name: Run tests
-          command: rspec ./spec
+          command: bundle exec rspec ./spec
+
   deploy-stg:
-    - heroku/ploy-via-git --app-name=$HEROKU_APP_NAME_STAGING
+    machine:
+      enabled: true
+    working_directory: ~/portifolio-api
+    steps:
+      - run: echo "VAI STAGING"
+
   deploy-prod:
-    - heroku/ploy-via-git
+    machine:
+      enabled: true
+    working_directory: ~/portifolio-api
+    steps:
+      - run: echo "VAI PROD"
 
 workflows:
-  - test-api
-  - deploy-stg
-      requires:
-        - test
-      filters:
-        branches:
-          only: master
-  - deploy-prod
-      type: approval
-      requires:
-        - test
+  version: 2
+  pipeline:
+    jobs:
+      - test-api
+      - deploy-stg:
+          requires:
+            - test-api
+          filters:
+            branches:
+              only: master
+      - deploy-prod:
+          type: approval
+          requires:
+            - deploy-stg
