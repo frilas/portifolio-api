@@ -81,7 +81,11 @@ test:
 #   production:
 #     url: <%= ENV['DATABASE_URL'] %>
 #
+staging: &staging
+  adapter: postgresql
+  encoding: unicode
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  url: <%= ENV['DATABASE_URL'] %>
+
 production:
-  <<: *default
-  database: portifolio_api_production
-  url: <%= ENV['PORTFOLIO_API_DATABASE_URL'] %>
+  <<: *staging

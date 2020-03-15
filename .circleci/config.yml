@@ -48,14 +48,34 @@ jobs:
       enabled: true
     working_directory: ~/portifolio-api
     steps:
-      - run: echo "VAI STAGING"
+      - checkout
+      - run:
+          name: Setup heroku
+          command: bash  .circleci/setup-heroku.sh
+      - run:
+          name: Deploy!
+          command: |
+            git push staging master
+            heroku run rake db:migrate -r staging
+            sleep 5
+            heroku restart -r staging
 
   deploy-prod:
     machine:
       enabled: true
     working_directory: ~/portifolio-api
     steps:
-      - run: echo "VAI PROD"
+      - checkout
+      - run:
+          name: Setup heroku
+          command: bash  .circleci/setup-heroku.sh
+      - run:
+          name: Deploy!
+          command: |
+            git push production master
+            heroku run rake db:migrate -r production
+            sleep 5
+            heroku restart -r production
 
 workflows:
   version: 2
@@ -68,7 +88,10 @@ workflows:
           filters:
             branches:
               only: master
-      - deploy-prod:
+      - approve-deploy-prod:
           type: approval
           requires:
             - deploy-stg
+      - deploy-prod:
+          requires:
+            - approve-deploy-prod

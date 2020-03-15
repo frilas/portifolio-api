@@ -16,3 +16,5 @@ git remote rename heroku production
 
 heroku git:remote -a $HEROKU_APP_NAME_STAGING
 git remote rename heroku staging
+
+git remote -v show
