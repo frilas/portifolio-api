@@ -1,4 +1,4 @@
-FROM ruby:alpine as base
+FROM ruby:2.6.5-alpine as base
 
 RUN apk update \
     && apk add -q --no-cache \
